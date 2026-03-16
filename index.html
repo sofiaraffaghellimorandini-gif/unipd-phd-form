@@ -948,7 +948,61 @@ function buildReview() {
   document.getElementById("reviewCard").innerHTML = h;
 }
 
+// ── GOOGLE SHEETS ENDPOINT ──
+// After deploying your Apps Script, paste the URL below:
+var SHEETS_URL = "YOUR_APPS_SCRIPT_URL_HERE";
+
+function sendToSheets() {
+  if (!SHEETS_URL || SHEETS_URL === "YOUR_APPS_SCRIPT_URL_HERE") return;
+  var year = g("studyYear");
+  var proc = radioSelections["year3Proc"] || "";
+  var data = {
+    "Data compilazione": g("submissionDate"),
+    "Anno Accademico": g("academicYear"),
+    "Supervisore": g("supervisorName"),
+    "Email Supervisore": g("supervisorEmail"),
+    "Co-Tutor": g("coSupervisor"),
+    "Cognome e Nome Dottorando": g("candidateName"),
+    "Matricola": g("studentId"),
+    "Corso di Dottorato": g("phdCourse"),
+    "Ciclo": g("cycle"),
+    "Anno di corso": year,
+    "Curriculum": g("curriculum"),
+    "Titolo Tesi": g("thesisTitle"),
+    "Parere Annuale": rv("annualOpinion"),
+    "Procedura Anno 3": proc,
+    "Giudizio Finale": rv("finalAdmission"),
+    "Percorso del Dottorando": g("j_progress"),
+    "Tema della Tesi": g("j_topic"),
+    "Domanda di Ricerca": g("j_researchQ"),
+    "Dibattito": g("j_debate"),
+    "Letteratura": g("j_literature"),
+    "Metodo": g("j_method_overview"),
+    "Metodologia": g("j_methodology"),
+    "Contributo": g("j_contribution"),
+    "Valutazione Complessiva": g("j_overall"),
+    "Referee 1": g("ref1_name"),
+    "Istituzione Referee 1": g("ref1_institution"),
+    "Email Referee 1": g("ref1_email"),
+    "Referee 2": g("ref2_name"),
+    "Istituzione Referee 2": g("ref2_institution"),
+    "Email Referee 2": g("ref2_email"),
+    "Commissione 1": g("comm1_name"),
+    "Commissione 2": g("comm2_name"),
+    "Commissione 3": g("comm3_name")
+  };
+  fetch(SHEETS_URL, {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: { "Content-Type": "application/json" }
+  }).catch(function(err) {
+    console.warn("Google Sheets submission failed:", err);
+  });
+}
+
 function submitForm() {
+  // Send to Google Sheets (silent, won't block PDF)
+  sendToSheets();
   document.querySelectorAll(".form-section").forEach(function(s) { s.classList.add("active"); });
   document.getElementById("confirmationScreen").classList.remove("show");
   generatePDF();

@@ -255,8 +255,8 @@ textarea.large { min-height: 150px; }
       </span>
     </div>
 
-    <div class="consent-row" onclick="toggleConsent()">
-      <input type="checkbox" id="gdprConsent">
+    <div class="consent-row">
+      <input type="checkbox" id="gdprConsent" onchange="toggleConsent()" style="width:20px;height:20px;cursor:pointer;accent-color:#9B0014;flex-shrink:0;">
       <label for="gdprConsent">
         <strong data-it="Dichiaro di aver letto l'informativa" data-en="I declare I have read the privacy notice">Dichiaro di aver letto l'informativa</strong>
         <span data-it=" e acconsento al trattamento dei miei dati personali ai fini della gestione del percorso di dottorato, ai sensi del GDPR."
@@ -751,8 +751,11 @@ function renderProgress() {
 }
 
 function toggleConsent() {
-  var cb = document.getElementById("gdprConsent");
-  cb.checked = !cb.checked;
+  var cb = document.getElementById('gdprConsent');
+  var btn = document.getElementById('btnProceed');
+  if (btn) btn.disabled = !cb.checked;
+  var row = cb.closest('.consent-row');
+  if (row) row.classList.toggle('checked', cb.checked);
 }
 
 function selectRadio(group, value, cardId) {

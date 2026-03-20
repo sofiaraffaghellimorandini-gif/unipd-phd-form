@@ -324,6 +324,53 @@ textarea.large { min-height: 150px; }
     .lang-btn { padding: 5px 10px; font-size: 0.72rem; }
   }
 
+
+  /* ── UPLOAD SECTION ── */
+  .upload-section { text-align: center; }
+  .upload-card {
+    background: white;
+    border-radius: 12px;
+    padding: 40px 32px;
+    max-width: 600px;
+    margin: 0 auto;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .upload-icon { font-size: 3rem; margin-bottom: 16px; }
+  .upload-title { font-size: 1.5rem; color: #9B0014; margin-bottom: 12px; font-family: Georgia, serif; }
+  .upload-desc { color: #555; margin-bottom: 28px; line-height: 1.6; font-size: 0.95rem; }
+  .upload-area {
+    border: 2px dashed #9B0014;
+    border-radius: 10px;
+    padding: 36px 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 20px;
+    background: #fdf5f6;
+  }
+  .upload-area:hover { background: #fae8ea; border-color: #7a0010; }
+  .upload-area-icon { font-size: 2.5rem; color: #9B0014; margin-bottom: 8px; }
+  .upload-area-text { font-weight: 600; color: #9B0014; margin-bottom: 4px; }
+  .upload-area-sub { color: #999; font-size: 0.82rem; }
+  .upload-status { padding: 12px; background: #fff8e1; border-radius: 8px; color: #666; margin-bottom: 12px; }
+  .upload-success {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    background: #e8f5e9;
+    border-radius: 8px;
+    color: #2e7d32;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .upload-success-icon { font-size: 1.3rem; }
+  .upload-success a { color: #2e7d32; margin-left: 8px; }
+  .upload-nav { display: flex; gap: 12px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
+  @media (max-width: 768px) {
+    .upload-card { padding: 24px 16px; }
+    .upload-nav { flex-direction: column; align-items: stretch; }
+  }
+
 </style>
 </head>
 <body>
@@ -995,9 +1042,6 @@ textarea.large { min-height: 150px; }
     <a href="javascript:void(0)" class="btn btn-primary" onclick="generatePDF()">
       <span data-it="Stampa / Salva PDF" data-en="Print / Save PDF">Stampa / Salva PDF</span>
     </a>
-    <a href="javascript:void(0)" class="btn btn-success" onclick="downloadCSV()">
-      <span data-it="Scarica CSV (Coordinatore)" data-en="Download CSV (Coordinator)">Scarica CSV (Coordinatore)</span>
-    </a>
     <a href="javascript:void(0)" class="btn btn-secondary" onclick="resetForm()">
       <span data-it="Nuovo Modulo" data-en="New Form">Nuovo Modulo</span>
     </a>
@@ -1382,6 +1426,63 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 
 document.body.addEventListener("touchstart", function(){}, { passive: true });
+
+// ── PDF UPLOAD TO DRIVE ──
+function handlePDFUpload(input) {
+  var file = input.files[0];
+  if (!file) return;
+  if (file.type !== 'application/pdf') {
+    alert(currentLang === 'it' ? 'Seleziona un file PDF valido.' : 'Please select a valid PDF file.');
+    return;
+  }
+
+  var status = document.getElementById('uploadStatus');
+  var success = document.getElementById('uploadSuccess');
+  status.style.display = 'block';
+  status.innerHTML = currentLang === 'it' 
+    ? '&#8987; Caricamento in corso...' 
+    : '&#8987; Uploading...';
+  success.style.display = 'none';
+
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var base64 = e.target.result.split(',')[1];
+    var candidate = document.getElementById('candidateName') ? document.getElementById('candidateName').value.replace(/\s+/g,'_') : 'dottorando';
+    var date = new Date().toISOString().split('T')[0].replace(/-/g,'');
+    var fileName = 'UNIPD_PhD_Firmato_' + candidate + '_' + date + '.pdf';
+
+    fetch(SHEETS_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        action: 'uploadPDF',
+        pdfBase64: base64,
+        fileName: fileName,
+        rowNum: submissionRowNum
+      })
+    })
+    .then(r => r.json())
+    .then(data => {
+      status.style.display = 'none';
+      if (data.result === 'success') {
+        success.style.display = 'flex';
+        var link = document.getElementById('uploadedFileLink');
+        if (link && data.fileUrl) {
+          link.href = data.fileUrl;
+        }
+      } else {
+        status.style.display = 'block';
+        status.innerHTML = '&#10007; ' + (currentLang === 'it' ? 'Errore nel caricamento. Riprova.' : 'Upload failed. Please try again.');
+      }
+    })
+    .catch(() => {
+      status.style.display = 'block';
+      status.innerHTML = '&#10007; ' + (currentLang === 'it' ? 'Errore di connessione.' : 'Connection error.');
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
 </script>
 </body>
 </html>

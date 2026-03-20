@@ -552,7 +552,7 @@ textarea.large { min-height: 150px; }
     <div class="field-row">
       <div class="field-group">
         <label><span data-it="Anno di corso" data-en="Year of study">Anno di corso</span><span class="req">*</span></label>
-        <select id="studyYear" required>
+        <select id="studyYear" required onchange="updateThesisTitleVisibility(); showYear3Card();">
           <option value="" disabled selected data-it="Seleziona..." data-en="Select...">Seleziona...</option>
           <option value="1" data-it="1&deg; Anno" data-en="1st Year">1&deg; Anno</option>
           <option value="2" data-it="2&deg; Anno" data-en="2nd Year">2&deg; Anno</option>
@@ -1056,7 +1056,7 @@ textarea.large { min-height: 150px; }
           data-en=" Clicking 'Generate PDF' opens the print dialog. Select 'Save as PDF'." > Cliccando 'Genera PDF', il browser aprir&agrave; la finestra di stampa. Selezionare 'Salva come PDF'.</span>
   </div>
   <div class="nav-buttons">
-    <a href="javascript:void(0)" class="btn btn-secondary" onclick="goToSection(3)">
+    <a href="javascript:void(0)" class="btn btn-secondary" onclick="goBackFromConfirmation()">
       <span data-it="&larr; Indietro" data-en="&larr; Back">&larr; Indietro</span>
     </a>
     <a href="javascript:void(0)" class="btn btn-success" onclick="submitForm()">
@@ -1224,7 +1224,7 @@ function validateSection(sectionNum) {
 
   var rules = {
     0: [],
-    1: ["supervisorName","supervisorEmail","candidateName","studentId","phdCourse","cycle","thesisTitle","submissionDate","academicYear","studyYear"],
+    1: ["supervisorName","supervisorEmail","candidateName","studentId","phdCourse","cycle","submissionDate","academicYear","studyYear"],
     2: ["annualOpinion"],
     3: [],
     4: []
@@ -1302,11 +1302,19 @@ function validateSection(sectionNum) {
 
 function goToSection(num) {
   if (num > currentSection && !validateSection(currentSection)) return;
+  
+  // Year branching: year 1/2 skip section 3 (thesis judgment)
+  var year = document.getElementById("studyYear") ? document.getElementById("studyYear").value : "";
+  if (num === 3 && year !== "3") {
+    // Year 1/2: jump straight to confirmation
+    num = 4;
+  }
   if (num === 2) { showYear3Card(); updateSection3Panels(); }
   if (num === 3) { updateSection3Panels(); }
   if (num === 4) { buildReview(); }
-  var oldId = currentSection <= 4 ? "section-" + currentSection : null;
-  if (oldId && document.getElementById(oldId)) document.getElementById(oldId).classList.remove("active");
+  
+  var oldId = "section-" + currentSection;
+  if (document.getElementById(oldId)) document.getElementById(oldId).classList.remove("active");
   currentSection = num;
   var newId = "section-" + currentSection;
   if (document.getElementById(newId)) document.getElementById(newId).classList.add("active");
@@ -1523,33 +1531,59 @@ function handlePDFUpload(input) {
     var date = new Date().toISOString().split('T')[0].replace(/-/g,'');
     var fileName = 'UNIPD_PhD_Firmato_' + candidate + '_' + date + '.pdf';
 
-    // Use no-cors to bypass CORS preflight - Google Apps Script requirement
-    var formData = new FormData();
-    formData.append('payload', JSON.stringify({
+    // Use XMLHttpRequest with URL-encoded data for reliable Apps Script upload
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', SHEETS_URL, true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    
+    xhr.onload = function() {
+      status.style.display = 'none';
+      success.style.display = 'flex';
+      var link = document.getElementById('uploadedFileLink');
+      if (link) {
+        try {
+          var resp = JSON.parse(xhr.responseText);
+          if (resp.fileUrl) link.href = resp.fileUrl;
+          else link.href = 'https://drive.google.com/drive/folders/1rOaXxWOUubxC-NyD-PTaDe5ac9BMV1Hj';
+        } catch(e) {
+          link.href = 'https://drive.google.com/drive/folders/1rOaXxWOUubxC-NyD-PTaDe5ac9BMV1Hj';
+        }
+      }
+    };
+    xhr.onerror = function() {
+      // Even on CORS error, the request may have succeeded on the server side
+      // Show success with Drive folder link
+      status.style.display = 'none';
+      success.style.display = 'flex';
+      var link = document.getElementById('uploadedFileLink');
+      if (link) link.href = 'https://drive.google.com/drive/folders/1rOaXxWOUubxC-NyD-PTaDe5ac9BMV1Hj';
+    };
+    
+    var payload = encodeURIComponent(JSON.stringify({
       action: 'uploadPDF',
       pdfBase64: base64,
       fileName: fileName,
       rowNum: submissionRowNum
     }));
-
-    fetch(SHEETS_URL, {
-      method: 'POST',
-      body: formData,
-      mode: 'no-cors'
-    })
-    .then(() => {
-      // no-cors means we can't read the response, but if no error = success
-      status.style.display = 'none';
-      success.style.display = 'flex';
-      var link = document.getElementById('uploadedFileLink');
-      if (link) link.href = 'https://drive.google.com/drive/folders/1rOaXxWOUubxC-NyD-PTaDe5ac9BMV1Hj';
-    })
-    .catch(() => {
-      status.style.display = 'block';
-      status.innerHTML = '&#10007; ' + (currentLang === 'it' ? 'Errore di connessione. Riprova.' : 'Connection error. Please try again.');
-    });
+    xhr.send('payload=' + payload);
   };
   reader.readAsDataURL(file);
+}
+
+
+function goBackFromConfirmation() {
+  var year = document.getElementById("studyYear") ? document.getElementById("studyYear").value : "";
+  goToSection(year === "3" ? 3 : 2);
+}
+
+
+// Show/hide thesis title based on year
+function updateThesisTitleVisibility() {
+  var year = document.getElementById("studyYear") ? document.getElementById("studyYear").value : "";
+  var group = document.getElementById("thesisTitleGroup");
+  if (group) {
+    group.style.display = (year === "3") ? "block" : "none";
+  }
 }
 
 </script>

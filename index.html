@@ -371,6 +371,42 @@ textarea.large { min-height: 150px; }
     .upload-nav { flex-direction: column; align-items: stretch; }
   }
 
+
+  /* UPLOAD SECTION */
+  .upload-section { text-align: center; }
+  .upload-card {
+    background: white; border-radius: 12px; padding: 40px 32px;
+    max-width: 600px; margin: 0 auto;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .upload-icon { font-size: 3rem; margin-bottom: 16px; }
+  .upload-title { font-size: 1.5rem; color: #9B0014; margin-bottom: 12px; font-family: Georgia, serif; }
+  .upload-desc { color: #555; margin-bottom: 28px; line-height: 1.6; font-size: 0.95rem; }
+  .upload-area {
+    border: 2px dashed #9B0014; border-radius: 10px; padding: 36px 24px;
+    cursor: pointer; transition: all 0.2s; margin-bottom: 20px; background: #fdf5f6;
+  }
+  .upload-area:hover { background: #fae8ea; border-color: #7a0010; }
+  .upload-area-icon { font-size: 2.5rem; color: #9B0014; margin-bottom: 8px; }
+  .upload-area-text { font-weight: 600; color: #9B0014; margin-bottom: 4px; }
+  .upload-area-sub { color: #999; font-size: 0.82rem; }
+  .upload-status { padding: 12px; background: #fff8e1; border-radius: 8px; color: #666; margin-bottom: 12px; }
+  .upload-success {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 18px; background: #e8f5e9; border-radius: 8px;
+    color: #2e7d32; font-weight: 600; margin-bottom: 12px;
+  }
+  .upload-success-icon { font-size: 1.3rem; }
+  .upload-nav { display: flex; gap: 12px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
+  .btn-success {
+    background: #2e7d32; color: white;
+  }
+  .btn-success:hover { background: #1b5e20; }
+  @media (max-width: 768px) {
+    .upload-card { padding: 24px 16px; }
+    .upload-nav { flex-direction: column; align-items: stretch; }
+  }
+
 </style>
 </head>
 <body>
@@ -1042,11 +1078,47 @@ textarea.large { min-height: 150px; }
     <a href="javascript:void(0)" class="btn btn-primary" onclick="generatePDF()">
       <span data-it="Stampa / Salva PDF" data-en="Print / Save PDF">Stampa / Salva PDF</span>
     </a>
+    <a href="javascript:void(0)" class="btn btn-success" onclick="goToSection(5)">
+      <span data-it="Carica PDF Firmato" data-en="Upload Signed PDF">Carica PDF Firmato</span>
+    </a>
     <a href="javascript:void(0)" class="btn btn-secondary" onclick="resetForm()">
       <span data-it="Nuovo Modulo" data-en="New Form">Nuovo Modulo</span>
     </a>
   </div>
 </div>
+
+    <!-- SECTION 5: Upload Signed PDF -->
+    <div id="section-5" class="form-section upload-section">
+      <div class="upload-card">
+        <div class="upload-icon">&#128196;</div>
+        <h2 class="upload-title" data-it="Carica il PDF Firmato" data-en="Upload Signed PDF">Carica il PDF Firmato</h2>
+        <p class="upload-desc" 
+           data-it="Hai stampato, firmato e scansionato il giudizio? Carica qui il PDF firmato per inviarlo direttamente al coordinatore." 
+           data-en="Have you printed, signed and scanned the judgment? Upload the signed PDF here to send it directly to the coordinator.">
+          Hai stampato, firmato e scansionato il giudizio? Carica qui il PDF firmato per inviarlo direttamente al coordinatore.
+        </p>
+        <div class="upload-area" id="uploadArea" onclick="document.getElementById('pdfUploadInput').click()">
+          <div class="upload-area-icon">&#8679;</div>
+          <p class="upload-area-text" data-it="Clicca per selezionare il PDF firmato" data-en="Click to select the signed PDF">Clicca per selezionare il PDF firmato</p>
+          <p class="upload-area-sub" data-it="Solo file PDF" data-en="PDF files only">Solo file PDF</p>
+        </div>
+        <input type="file" id="pdfUploadInput" accept=".pdf" style="display:none" onchange="handlePDFUpload(this)">
+        <div id="uploadStatus" class="upload-status" style="display:none"></div>
+        <div id="uploadSuccess" class="upload-success" style="display:none">
+          <span class="upload-success-icon">&#10003;</span>
+          <span data-it="PDF caricato con successo!" data-en="PDF uploaded successfully!">PDF caricato con successo!</span>
+          <a id="uploadedFileLink" href="#" target="_blank" data-it="Visualizza su Drive" data-en="View on Drive" style="margin-left:8px;">Visualizza su Drive</a>
+        </div>
+        <div class="upload-nav">
+          <a href="javascript:void(0)" class="btn btn-secondary" onclick="goToSection(4)">
+            <span data-it="&#8592; Torna al riepilogo" data-en="&#8592; Back to summary">&#8592; Torna al riepilogo</span>
+          </a>
+          <a href="javascript:void(0)" class="btn btn-secondary" onclick="resetForm()">
+            <span data-it="&#8635; Nuovo Modulo" data-en="&#8635; New Form">&#8635; Nuovo Modulo</span>
+          </a>
+        </div>
+      </div>
+    </div>
 
 </main>
 <script>

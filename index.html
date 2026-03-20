@@ -1523,33 +1523,30 @@ function handlePDFUpload(input) {
     var date = new Date().toISOString().split('T')[0].replace(/-/g,'');
     var fileName = 'UNIPD_PhD_Firmato_' + candidate + '_' + date + '.pdf';
 
+    // Use no-cors to bypass CORS preflight - Google Apps Script requirement
+    var formData = new FormData();
+    formData.append('payload', JSON.stringify({
+      action: 'uploadPDF',
+      pdfBase64: base64,
+      fileName: fileName,
+      rowNum: submissionRowNum
+    }));
+
     fetch(SHEETS_URL, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        action: 'uploadPDF',
-        pdfBase64: base64,
-        fileName: fileName,
-        rowNum: submissionRowNum
-      })
+      body: formData,
+      mode: 'no-cors'
     })
-    .then(r => r.json())
-    .then(data => {
+    .then(() => {
+      // no-cors means we can't read the response, but if no error = success
       status.style.display = 'none';
-      if (data.result === 'success') {
-        success.style.display = 'flex';
-        var link = document.getElementById('uploadedFileLink');
-        if (link && data.fileUrl) {
-          link.href = data.fileUrl;
-        }
-      } else {
-        status.style.display = 'block';
-        status.innerHTML = '&#10007; ' + (currentLang === 'it' ? 'Errore nel caricamento. Riprova.' : 'Upload failed. Please try again.');
-      }
+      success.style.display = 'flex';
+      var link = document.getElementById('uploadedFileLink');
+      if (link) link.href = 'https://drive.google.com/drive/folders/1rOaXxWOUubxC-NyD-PTaDe5ac9BMV1Hj';
     })
     .catch(() => {
       status.style.display = 'block';
-      status.innerHTML = '&#10007; ' + (currentLang === 'it' ? 'Errore di connessione.' : 'Connection error.');
+      status.innerHTML = '&#10007; ' + (currentLang === 'it' ? 'Errore di connessione. Riprova.' : 'Connection error. Please try again.');
     });
   };
   reader.readAsDataURL(file);

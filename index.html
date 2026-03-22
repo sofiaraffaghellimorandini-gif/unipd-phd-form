@@ -145,7 +145,8 @@ textarea.large { min-height: 150px; }
   header, .progress-container, .nav-buttons, .lang-toggle, .confirmation-actions, .header-sub, .hint, .flow-info, .error-msg, .gdpr-box { display: none !important; }
   body { background: white; font-size: 11pt; }
   main { margin: 0; padding: 0; max-width: 100%; }
-  .form-section { display: block !important; }
+  .form-section { display: none !important; }
+  #section-4 { display: block !important; }
   .card { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; margin-bottom: 12px; }
   .print-header { display: block !important; text-align: center; margin-bottom: 20px; border-bottom: 2px solid var(--red); padding-bottom: 14px; }
   .print-header h1 { color: var(--red); font-size: 13pt; margin-bottom: 4px; }
@@ -1095,14 +1096,13 @@ textarea.large { min-height: 150px; }
   <div class="confirmation-sub" data-it="Il giudizio di ammissione alla discussione finale &egrave; stato registrato." data-en="The admission judgment for the final dissertation has been recorded.">
     Il giudizio di ammissione alla discussione finale &egrave; stato registrato.
   </div>
-  <div class="confirmation-actions">
+  class="confirmation-actions">
     <a href="javascript:void(0)" class="btn btn-primary" onclick="generatePDF()">
       <span data-it="Stampa / Salva PDF" data-en="Print / Save PDF">Stampa / Salva PDF</span>
     </a>
     <a href="javascript:void(0)" class="btn btn-success" onclick="goToSection(5)">
       <span data-it="Carica PDF Firmato" data-en="Upload Signed PDF">Carica PDF Firmato</span>
     </a>
-    <a href="javascript:void(0)" class="btn btn-success" onclick="goToSection(5)"><span data-it="Carica PDF Firmato" data-en="Upload Signed PDF">Carica PDF Firmato</span></a>
     <a href="javascript:void(0)" class="btn btn-secondary" onclick="resetForm()">
       <span data-it="Nuovo Modulo" data-en="New Form">Nuovo Modulo</span>
     </a>
@@ -1506,9 +1506,11 @@ function sendToSheets() {
 function submitForm() {
   // Send to Google Sheets (silent, won't block PDF)
   sendToSheets();
-  document.querySelectorAll(".form-section").forEach(function(s) { if(s.id==="section-4") s.classList.add("active"); else s.classList.remove("active"); });
-  document.getElementById("confirmationScreen").classList.remove("show");
-  generatePDF();
+  // Show confirmation screen
+  buildReview();
+  document.querySelectorAll(".form-section").forEach(function(s) { s.classList.remove("active"); });
+  document.getElementById("section-4").classList.add("active");
+  goToSection(4);
   setTimeout(function() {
     document.querySelectorAll(".form-section").forEach(function(s) { s.classList.remove("active"); });
     document.getElementById("confirmationScreen").classList.add("show");

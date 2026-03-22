@@ -407,6 +407,24 @@ textarea.large { min-height: 150px; }
     .upload-nav { flex-direction: column; align-items: stretch; }
   }
 
+
+  .review-signature {
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+  .signature-line {
+    border-bottom: 1.5px solid #333;
+    height: 50px;
+    margin: 20px 0 8px;
+    width: 60%;
+  }
+  .signature-label {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-bottom: 8px;
+  }
+
 </style>
 </head>
 <body>
@@ -1346,34 +1364,96 @@ function row(key, val) {
 
 function buildReview() {
   var year = g("studyYear");
-  var proc = radioSelections["year3Proc"];
+  var proc = radioSelections["year3Proc"] || "";
   var isYear3 = year === "3";
+  var it = currentLang === "it";
   var h = "";
-  if (currentLang === "it") {
-    h += "<div class=\"card-title\">Riepilogo Dati</div>";
-    h += "<div class=\"review-block\"><div class=\"review-block-title\">Supervisore</div>";
-    h += row("Nome",g("supervisorName")) + row("Email",g("supervisorEmail")) + row("Co-Tutor",g("coSupervisor")) + row("Anno Acc.",g("academicYear"));
-    h += "</div><div class=\"review-block\"><div class=\"review-block-title\">Dottorando</div>";
-    h += row("Nome",g("candidateName")) + row("Matricola",g("studentId")) + row("Corso",g("phdCourse")) + row("Ciclo",g("cycle"));
-    h += row("Anno di corso",year) + row("Curriculum",g("curriculum")) + row("Titolo tesi",g("thesisTitle")) + row("Data",g("submissionDate"));
-    h += "</div><div class=\"review-block\"><div class=\"review-block-title\">Valutazione</div>";
-    h += row("Parere annuale",rv("annualOpinion"));
-    if (isYear3) h += row("Procedura anno 3",rv("year3Proc"));
-    if (!isYear3 || proc === "giudizio") h += row("Giudizio finale",rv("finalAdmission"));
+
+  // ── Header ──
+  h += "<div class=\"review-block\">";
+  h += "<div class=\"review-block-title\">" + (it ? "Supervisore" : "Supervisor") + "</div>";
+  h += row(it?"Nome":"Name", g("supervisorName"));
+  h += row("Email", g("supervisorEmail"));
+  if (g("coSupervisor")) h += row(it?"Co-Tutor":"Co-Supervisor", g("coSupervisor"));
+  h += row(it?"Anno Accademico":"Academic Year", g("academicYear"));
+  h += row(it?"Data":"Date", g("submissionDate"));
+  h += "</div>";
+
+  // ── Candidate ──
+  h += "<div class=\"review-block\">";
+  h += "<div class=\"review-block-title\">" + (it ? "Dottorando/a" : "PhD Candidate") + "</div>";
+  h += row(it?"Cognome e Nome":"Surname and Name", g("candidateName"));
+  h += row(it?"Matricola":"Student ID", g("studentId"));
+  h += row(it?"Corso di Dottorato":"PhD Programme", g("phdCourse"));
+  h += row(it?"Ciclo":"Cycle", g("cycle"));
+  h += row(it?"Curriculum":"Curriculum", g("curriculum"));
+  h += row(it?"Anno di corso":"Year of study", year);
+  if (isYear3 && g("thesisTitle")) h += row(it?"Titolo Tesi":"Thesis Title", g("thesisTitle"));
+  h += "</div>";
+
+  // ── Valutazione annuale (all years) ──
+  h += "<div class=\"review-block\">";
+  h += "<div class=\"review-block-title\">" + (it ? "Valutazione Annuale" : "Annual Evaluation") + "</div>";
+  h += row(it?"Parere annuale":"Annual opinion", rv("annualOpinion"));
+  h += "</div>";
+
+  // ── Year 3 only sections ──
+  if (isYear3) {
+    h += "<div class=\"review-block\">";
+    h += "<div class=\"review-block-title\">" + (it ? "Procedura Anno 3" : "Year 3 Procedure") + "</div>";
+    h += row(it?"Operazione selezionata":"Selected operation", rv("year3Proc"));
     h += "</div>";
-  } else {
-    h += "<div class=\"card-title\">Data Summary</div>";
-    h += "<div class=\"review-block\"><div class=\"review-block-title\">Supervisor</div>";
-    h += row("Name",g("supervisorName")) + row("Email",g("supervisorEmail")) + row("Co-Supervisor",g("coSupervisor")) + row("Acad. Year",g("academicYear"));
-    h += "</div><div class=\"review-block\"><div class=\"review-block-title\">Candidate</div>";
-    h += row("Name",g("candidateName")) + row("Student ID",g("studentId")) + row("Programme",g("phdCourse")) + row("Cycle",g("cycle"));
-    h += row("Year",year) + row("Curriculum",g("curriculum")) + row("Thesis title",g("thesisTitle")) + row("Date",g("submissionDate"));
-    h += "</div><div class=\"review-block\"><div class=\"review-block-title\">Evaluation</div>";
-    h += row("Annual opinion",rv("annualOpinion"));
-    if (isYear3) h += row("Year 3 procedure",rv("year3Proc"));
-    if (!isYear3 || proc === "giudizio") h += row("Final judgment",rv("finalAdmission"));
-    h += "</div>";
+
+    // Giudizio finale
+    if (proc === "giudizio" || proc === "") {
+      h += "<div class=\"review-block\">";
+      h += "<div class=\"review-block-title\">" + (it ? "Giudizio Finale" : "Final Judgment") + "</div>";
+      h += row(it?"Ammissione":"Admission", rv("finalAdmission"));
+      if (g("j_progress")) h += row(it?"Percorso":"Progress", g("j_progress"));
+      if (g("j_topic")) h += row(it?"Tema":"Topic", g("j_topic"));
+      if (g("j_researchQ")) h += row(it?"Domanda di ricerca":"Research question", g("j_researchQ"));
+      if (g("j_debate")) h += row(it?"Dibattito":"Debate", g("j_debate"));
+      if (g("j_literature")) h += row(it?"Letteratura":"Literature", g("j_literature"));
+      if (g("j_method_overview")) h += row(it?"Metodo":"Method", g("j_method_overview"));
+      if (g("j_methodology")) h += row(it?"Metodologia":"Methodology", g("j_methodology"));
+      if (g("j_contribution")) h += row(it?"Contributo":"Contribution", g("j_contribution"));
+      if (g("j_overall")) h += row(it?"Valutazione complessiva":"Overall evaluation", g("j_overall"));
+      h += "</div>";
+    }
+
+    // Referees
+    if (proc === "referees") {
+      h += "<div class=\"review-block\">";
+      h += "<div class=\"review-block-title\">" + (it ? "Referee Titolari" : "Primary Referees") + "</div>";
+      h += row("Referee I", g("ref1Name") + (g("ref1Inst") ? " — " + g("ref1Inst") : "") + (g("ref1Email") ? " — " + g("ref1Email") : ""));
+      h += row("Referee II", g("ref2Name") + (g("ref2Inst") ? " — " + g("ref2Inst") : "") + (g("ref2Email") ? " — " + g("ref2Email") : ""));
+      h += "</div>";
+      h += "<div class=\"review-block\">";
+      h += "<div class=\"review-block-title\">" + (it ? "Referee Supplenti" : "Substitute Referees") + "</div>";
+      h += row("Referee III", g("ref3Name") + (g("ref3Inst") ? " — " + g("ref3Inst") : "") + (g("ref3Email") ? " — " + g("ref3Email") : ""));
+      h += row("Referee IV", g("ref4Name") + (g("ref4Inst") ? " — " + g("ref4Inst") : "") + (g("ref4Email") ? " — " + g("ref4Email") : ""));
+      h += "</div>";
+    }
+
+    // Commissione
+    if (proc === "commissione") {
+      h += "<div class=\"review-block\">";
+      h += "<div class=\"review-block-title\">" + (it ? "Commissione di Esame" : "Examination Board") + "</div>";
+      for (var i=1; i<=6; i++) {
+        var n = g("comm"+i+"Name");
+        if (n) h += row((it?"Componente":"Member")+" "+i, n + (g("comm"+i+"Inst") ? " — "+g("comm"+i+"Inst") : "") + (g("comm"+i+"SSD") ? " ("+g("comm"+i+"SSD")+")" : "") + (g("comm"+i+"Email") ? " — "+g("comm"+i+"Email") : ""));
+      }
+      h += "</div>";
+    }
   }
+
+  // ── Signature space ──
+  h += "<div class=\"review-block review-signature\">";
+  h += "<div class=\"review-block-title\">" + (it ? "Firma del Supervisore" : "Supervisor Signature") + "</div>";
+  h += "<div class=\"signature-line\"></div>";
+  h += "<div class=\"signature-label\">" + (it ? "Firma e Data" : "Signature and Date") + "</div>";
+  h += "</div>";
+
   document.getElementById("reviewCard").innerHTML = h;
 }
 
